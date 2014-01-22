@@ -7,36 +7,45 @@ class Fluent::NataOutput < Fluent::Output
     require 'uri'
   end
 
-  config_param :host, :string
-  config_param :db, :string
+  config_param :hostname, :string
   config_param :base_url, :string
 
   def emit(tag, es, chain)
     chain.next
     es.each do |time, record|
-      prepared_record = prepare_record_to_post(time, record)
-      post(prepared_record)
+      validated_record = validate_record_to_post(time, record)
+      if validated_record
+        post(validated_record)
+      else
+        $log.warn "can't post record that is invalid: #{record}"
+      end
     end
   end
 
   SUPPRESS_STRINGS_PATTERN = /(^use \w+;|SET timestamp=\d+;|;$)/
-  def prepare_record_to_post(time, record)
-    prepared_record = record
-    prepared_record[:date] = Time.at(time) unless prepared_record[:date]
+  def validate_record_to_post(time, record)
+    target_record = record
 
-    if prepared_record[:sql]
-      prepared_record[:sql] = prepared_record[:sql].sub(SUPPRESS_STRINGS_PATTERN, '')
-      prepared_record[:sql] = prepared_record[:sql].strip
-    else
-      $log.warn "no SQL in record: #{api}"
+    unless target_record[:db]
+      $log.warn 'no DATABASE in record'
+      return false
     end
 
-    prepared_record
+    if target_record[:sql]
+      target_record[:sql] = target_record[:sql].gsub(SUPPRESS_STRINGS_PATTERN, '')
+      target_record[:sql] = target_record[:sql].strip
+    else
+      $log.warn "no SQL in record: #{target_record[:db]}"
+      return false
+    end
+
+    target_record[:date] = Time.at(time) unless target_record[:date]
+    target_record
   end
 
   def post(record)
     begin
-      api = URI.parse(@base_url + "/api/1/add/slow_log/#{@host}/#{@db}")
+      api = URI.parse(@base_url + "/api/1/add/slow_log/#{@hostname}/#{record[:db]}")
       request = Net::HTTP::Post.new(api.path)
       request.set_form_data(record)
       http = Net::HTTP.new(api.host, api.port)

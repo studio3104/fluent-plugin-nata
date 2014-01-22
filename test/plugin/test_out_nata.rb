@@ -5,22 +5,22 @@ class NataOutputTest < Test::Unit::TestCase
   NATA_TEST_PORT = '11180'
 
   CONFIG = %[
-    host test_host
-    db test_db
+    hostname test_host
     base_url http://#{NATA_TEST_HOST}:#{NATA_TEST_PORT}
   ]
 
   SLOW_LOG = %[
-# Time: 131031 12:38:58
-# User@Host: root[root] @ localhost []  Id:     3
-# Query_time: 10.001110  Lock_time: 0.000000 Rows_sent: 1  Rows_examined: 0
-SET timestamp=1383190738;
-select sleep(10);
 # Time: 131031 12:39:55
 # User@Host: root[root] @ localhost []  Id:     4
 # Query_time: 10.001142  Lock_time: 0.000000 Rows_sent: 1  Rows_examined: 0
-use information_schema;
+use test;
 SET timestamp=1383190795;
+select sleep(10);
+# Time: 131031 12:38:58
+# User@Host: root[root] @ localhost []  Id:     3
+# Query_time: 10.001110  Lock_time: 0.000000 Rows_sent: 1  Rows_examined: 0
+use information_schema;
+SET timestamp=1383190738;
 select sleep(10);
   ]
 
@@ -31,8 +31,7 @@ select sleep(10);
   def test_configure
     d = create_driver
     assert_equal "http://#{NATA_TEST_HOST}:#{NATA_TEST_PORT}", d.instance.base_url
-    assert_equal 'test_host', d.instance.host
-    assert_equal 'test_db', d.instance.db
+    assert_equal 'test_host', d.instance.hostname
   end
 
   def test_post
