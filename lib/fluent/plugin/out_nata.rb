@@ -24,23 +24,21 @@ class Fluent::NataOutput < Fluent::Output
 
   SUPPRESS_STRINGS_PATTERN = /(^use \w+;|SET timestamp=\d+;|;$)/
   def validate_record_to_post(time, record)
-    target_record = record
-
-    unless target_record[:db]
+    unless record[:db]
       $log.warn 'no DATABASE in record'
       return false
     end
 
-    if target_record[:sql]
-      target_record[:sql] = target_record[:sql].gsub(SUPPRESS_STRINGS_PATTERN, '')
-      target_record[:sql] = target_record[:sql].strip
+    if record[:sql]
+      record[:sql] = record[:sql].gsub(SUPPRESS_STRINGS_PATTERN, '')
+      record[:sql] = record[:sql].strip
     else
-      $log.warn "no SQL in record: #{target_record[:db]}"
+      $log.warn "no SQL in record: #{record[:db]}"
       return false
     end
 
-    target_record[:date] = Time.at(time) unless target_record[:date]
-    target_record
+    record[:date] = Time.at(time) unless record[:date]
+    record
   end
 
   def post(record)
