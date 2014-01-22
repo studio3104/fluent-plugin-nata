@@ -19,7 +19,7 @@ class Fluent::NataOutput < Fluent::Output
     end
   end
 
-  SUPPRESS_STRINGS_PATTERN = /(^use \w;|SET timestamp=\d+;|;$)/
+  SUPPRESS_STRINGS_PATTERN = /(^use \w+;|SET timestamp=\d+;|;$)/
   def prepare_record_to_post(time, record)
     prepared_record = record
     prepared_record[:date] = Time.at(time) unless prepared_record[:date]
